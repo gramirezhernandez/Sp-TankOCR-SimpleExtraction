@@ -18,7 +18,7 @@ load_dotenv()
 key = os.getenv("COMPUTER_VISION_KEY_SP")
 endpoint = "https://computer-vision-sp-propane-inspection-dev-us-east.cognitiveservices.azure.com/"
 
-image_path = r"./Images/qsteel1.jpg"   
+image_path = r"./Images/Trinity-model-test4.jpg"   
 
 # ----------------------------
 # 3) Keywords list with id + word
@@ -26,6 +26,7 @@ image_path = r"./Images/qsteel1.jpg"
 KEYWORDS = [
     {"manufacturer": "manchester tanks", "word": "manchester"},
     {"manufacturer": "trinity", "word": "trinity"},
+    {"manufacturer": "trinity", "word": "industries"},
     {"manufacturer": "quality steel", "word": "quality"},
     {"manufacturer": "quality steel", "word": "steel"},
     {"manufacturer": "american welding", "word": "american"},
