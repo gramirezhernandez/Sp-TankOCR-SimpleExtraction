@@ -57,6 +57,10 @@ supported_extensions = ('.jpg', '.jpeg', '.png', '.bmp', '.gif')
 # Get all image files from the folder
 image_files = [f for f in os.listdir(images_folder) if f.lower().endswith(supported_extensions)]
 
+if len(image_files) == 0:
+    print(f"No images found in '{images_folder}' folder. Please add images with supported extensions ({', '.join(supported_extensions)}) and try again.")
+    exit(0)
+
 print(f"Found {len(image_files)} images to process.\n")
 print("=" * 50)
 
