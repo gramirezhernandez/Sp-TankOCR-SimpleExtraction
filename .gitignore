@@ -1,3 +1,6 @@
 .env
-.jpg
-.png
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.gif
