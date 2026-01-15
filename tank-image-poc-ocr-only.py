@@ -21,7 +21,7 @@ load_dotenv()
 key = os.getenv("COMPUTER_VISION_KEY_SP_TIM_PROD")
 endpoint = "https://computer-vision-sp-tim-prod-us-east.cognitiveservices.azure.com/"
 
-image_path = "./Images/Lajat3.jpg"  
+images_folder = "./Images"
 
 # ----------------------------
 # 3) Keywords list with id + word
@@ -47,56 +47,76 @@ keyword_patterns = [
 ]
 
 # ----------------------------
-# 4) Init client and run OCR
+# 4) Init client
 # ----------------------------
 client = ComputerVisionClient(endpoint, CognitiveServicesCredentials(key))
 
-with open(image_path, "rb") as img:
-    read_response = client.read_in_stream(img, raw=True)
+# Supported image extensions
+supported_extensions = ('.jpg', '.jpeg', '.png', '.bmp', '.gif')
 
-operation_location = read_response.headers["Operation-Location"]
-operation_id = operation_location.split("/")[-1]
+# Get all image files from the folder
+image_files = [f for f in os.listdir(images_folder) if f.lower().endswith(supported_extensions)]
 
-# Poll until finished
-while True:
-    result = client.get_read_result(operation_id)
-    if result.status.lower() != "running":
-        break
-    time.sleep(1)
+print(f"Found {len(image_files)} images to process.\n")
+print("=" * 50)
 
-if result.status.lower() != "succeeded":
-    raise RuntimeError(f"OCR failed: {result.status}")
+results = []
 
-# ----------------------------
-# 5) Search for keywords and stop when found
-# ----------------------------
-found_manufacturer = None
+for image_file in image_files:
+    image_path = os.path.join(images_folder, image_file)
+    
+    # Run OCR on the image
+    with open(image_path, "rb") as img:
+        read_response = client.read_in_stream(img, raw=True)
 
-for page in result.analyze_result.read_results:
-    for line_num, line in enumerate(page.lines, start=1):
-        text = line.text
-        print(text)
-        for kp in keyword_patterns:
-            if kp["pattern"].search(text):
-                found_manufacturer = kp["manufacturer"]
+    operation_location = read_response.headers["Operation-Location"]
+    operation_id = operation_location.split("/")[-1]
+
+    # Poll until finished
+    while True:
+        result = client.get_read_result(operation_id)
+        if result.status.lower() != "running":
+            break
+        time.sleep(1)
+
+    if result.status.lower() != "succeeded":
+        print(f"{image_file} -> OCR FAILED")
+        results.append({"image": image_file, "manufacturer": "OCR FAILED"})
+        continue
+
+    # Search for keywords
+    found_manufacturer = None
+
+    for page in result.analyze_result.read_results:
+        for line in page.lines:
+            text = line.text
+            for kp in keyword_patterns:
+                if kp["pattern"].search(text):
+                    found_manufacturer = kp["manufacturer"]
+                    break
+            if found_manufacturer is not None:
                 break
         if found_manufacturer is not None:
             break
+
     if found_manufacturer is not None:
-        break
+        print(f"{image_file} -> {found_manufacturer}")
+        results.append({"image": image_file, "manufacturer": found_manufacturer})
+    else:
+        print(f"{image_file} -> No manufacturer found")
+        results.append({"image": image_file, "manufacturer": "Not found"})
 
 # ----------------------------
-# 6) Return result (for use in automation or script)
+# 6) Summary
 # ----------------------------
-if found_manufacturer is not None:
-    # Print only the ID (for integration with other systems)
-    print("--------")
-    print(f"Manufacturer found: {found_manufacturer}")
-else:
-    print("--------")
-    print("No keywords found.")
+print("\n" + "=" * 50)
+print("SUMMARY")
+print("=" * 50)
+for r in results:
+    print(f"{r['image']}: {r['manufacturer']}")
 
 end_time = time.time()
 exec_time = end_time - ini_time
-print("--------")
-print(f"Execution time: {exec_time:.4f} seconds")
+print("\n" + "=" * 50)
+print(f"Total images processed: {len(image_files)}")
+print(f"Total execution time: {exec_time:.4f} seconds")
