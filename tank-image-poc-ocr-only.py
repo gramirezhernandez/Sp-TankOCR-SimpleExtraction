@@ -15,10 +15,13 @@ ini_time = time.time()
 load_dotenv()
 
 #SP account DEV
-key = os.getenv("COMPUTER_VISION_KEY_SP")
-endpoint = "https://computer-vision-sp-propane-inspection-dev-us-east.cognitiveservices.azure.com/"
+#key = os.getenv("COMPUTER_VISION_KEY_SP")
+#endpoint = "https://computer-vision-sp-propane-inspection-dev-us-east.cognitiveservices.azure.com/" --DEV
 
-image_path = r"./Images/Trinity-model-test4.jpg"   
+key = os.getenv("COMPUTER_VISION_KEY_SP_TIM_PROD")
+endpoint = "https://computer-vision-sp-tim-prod-us-east.cognitiveservices.azure.com/"
+
+image_path = "./Images/Lajat3.jpg"  
 
 # ----------------------------
 # 3) Keywords list with id + word
@@ -31,7 +34,10 @@ KEYWORDS = [
     {"manufacturer": "quality steel", "word": "steel"},
     {"manufacturer": "american welding", "word": "american"},
     {"manufacturer": "american welding", "word": "welding"},
-    {"manufacturer": "chemitrol", "word": "chemitrol"},
+   # {"manufacturer": "chemitrol", "word": "chemical"}
+    {"manufacturer": "lajat", "word": "lajat"},
+     {"manufacturer": "lajat", "word": "leslajat"},
+    {"manufacturer": "chemitrol", "word": "chemitrol"}
 ]
 
 # Compile regex patterns for each keyword (whole word, case-insensitive)
@@ -69,6 +75,7 @@ found_manufacturer = None
 for page in result.analyze_result.read_results:
     for line_num, line in enumerate(page.lines, start=1):
         text = line.text
+        print(text)
         for kp in keyword_patterns:
             if kp["pattern"].search(text):
                 found_manufacturer = kp["manufacturer"]
@@ -83,8 +90,10 @@ for page in result.analyze_result.read_results:
 # ----------------------------
 if found_manufacturer is not None:
     # Print only the ID (for integration with other systems)
-    print(found_manufacturer)
+    print("--------")
+    print(f"Manufacturer found: {found_manufacturer}")
 else:
+    print("--------")
     print("No keywords found.")
 
 end_time = time.time()
